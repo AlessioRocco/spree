@@ -12,7 +12,8 @@ module Spree
     include Spree::NumberGenerator
 
     def generate_number(options = {})
-      options[:prefix] ||= 'R'
+      set_store
+      options.reverse_merge!(store.preferred_order_number)
       super(options)
     end
 
@@ -54,6 +55,8 @@ module Spree
     alias_attribute :shipping_address, :ship_address
 
     alias_attribute :ship_total, :shipment_total
+
+    belongs_to :store
 
     has_many :state_changes, as: :stateful
     has_many :line_items, -> { order("#{LineItem.table_name}.created_at ASC") }, dependent: :destroy, inverse_of: :order
@@ -657,6 +660,10 @@ module Spree
 
     def set_currency
       self.currency = Spree::Config[:currency] if self[:currency].nil?
+    end
+
+    def set_store
+      self.store = Spree::Store.default if self[:store_id].nil?
     end
 
     def create_token
